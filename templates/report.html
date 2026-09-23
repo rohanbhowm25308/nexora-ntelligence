@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Executive Report — NEXORA Intelligence</title>
+<style>
+  body { font-family: 'Georgia', 'Times New Roman', serif; color: #1c2333; max-width: 880px; margin: 40px auto; padding: 0 24px; line-height: 1.6; }
+  h1 { font-family: 'Segoe UI', sans-serif; font-size: 1.7rem; margin-bottom: 4px; }
+  .meta { color: #6a7488; font-size: 0.85rem; margin-bottom: 28px; font-family: 'Segoe UI', sans-serif; }
+  h2 { font-family: 'Segoe UI', sans-serif; font-size: 1.1rem; border-bottom: 2px solid #1f6feb; padding-bottom: 6px; margin-top: 34px; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #e2e6ee; }
+  th { background: #f4f6fb; font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; color: #4a5468; }
+  .kpi-strip { display: flex; gap: 14px; flex-wrap: wrap; margin: 18px 0; }
+  .kpi-box { flex: 1; min-width: 140px; border: 1px solid #e2e6ee; border-radius: 8px; padding: 12px 14px; font-family: 'Segoe UI', sans-serif; }
+  .kpi-box .l { font-size: 0.72rem; color: #6a7488; }
+  .kpi-box .v { font-size: 1.15rem; font-weight: 700; color: #10233f; }
+  .narrative { background: #f4f8ff; border-left: 3px solid #1f6feb; padding: 14px 18px; white-space: pre-line; font-size: 0.95rem; }
+  .badge { font-family: 'Segoe UI', sans-serif; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; background: #eef2fb; }
+  @media print { body { margin: 0; } }
+</style>
+</head>
+<body>
+  <h1>Executive Analytics Report</h1>
+  <div class="meta">NEXORA Intelligence Platform &middot; Generated {{ ctx.generated_at }}</div>
+
+  {% if narrative %}
+  <h2>Executive Summary</h2>
+  <div class="narrative">{{ narrative }}</div>
+  {% endif %}
+
+  <h2>KPI Summary</h2>
+  <div class="kpi-strip">
+    <div class="kpi-box"><div class="l">Total Revenue</div><div class="v">₹{{ "{:,.0f}".format(ctx.kpis.total_revenue) }}</div></div>
+    <div class="kpi-box"><div class="l">Total Profit</div><div class="v">₹{{ "{:,.0f}".format(ctx.kpis.total_profit) }}</div></div>
+    <div class="kpi-box"><div class="l">Total Orders</div><div class="v">{{ ctx.kpis.total_orders }}</div></div>
+    <div class="kpi-box"><div class="l">AOV</div><div class="v">₹{{ "{:,.0f}".format(ctx.kpis.aov) }}</div></div>
+    <div class="kpi-box"><div class="l">Profit Margin</div><div class="v">{{ ctx.kpis.profit_margin_pct }}%</div></div>
+    <div class="kpi-box"><div class="l">Repeat Rate</div><div class="v">{{ ctx.kpis.repeat_customer_rate_pct }}%</div></div>
+  </div>
+
+  <h2>Sales &amp; Product Analysis</h2>
+  <table>
+    <thead><tr><th>Product</th><th>Category</th><th>Revenue</th><th>Profit</th><th>Quadrant</th></tr></thead>
+    <tbody>
+    {% for p in top_products %}
+      <tr><td>{{ p.product_name }}</td><td>{{ p.category }}</td><td>₹{{ "{:,.0f}".format(p.revenue) }}</td><td>₹{{ "{:,.0f}".format(p.profit) }}</td><td><span class="badge">{{ p.quadrant }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Regional Performance</h2>
+  <table>
+    <thead><tr><th>Region</th><th>Revenue</th><th>Profit</th><th>Margin %</th><th>Growth %</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for r in ctx.regions %}
+      <tr><td>{{ r.region }}</td><td>₹{{ "{:,.0f}".format(r.revenue) }}</td><td>₹{{ "{:,.0f}".format(r.profit) }}</td><td>{{ r.margin_pct }}%</td><td>{{ r.growth_pct }}%</td><td><span class="badge">{{ r.status }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customer Segmentation (RFM)</h2>
+  <table>
+    <thead><tr><th>Segment</th><th>Customer Count</th></tr></thead>
+    <tbody>
+    {% for seg, count in ctx.rfm_summary.items() %}
+      <tr><td>{{ seg }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Forecast (Next 30 Days)</h2>
+  <div class="kpi-strip">
+    <div class="kpi-box"><div class="l">Expected Revenue</div><div class="v">₹{{ "{:,.0f}".format(ctx.forecast_next_30_days.expected_revenue) }}</div></div>
+    <div class="kpi-box"><div class="l">Lower Bound</div><div class="v">₹{{ "{:,.0f}".format(ctx.forecast_next_30_days.lower_bound) }}</div></div>
+    <div class="kpi-box"><div class="l">Upper Bound</div><div class="v">₹{{ "{:,.0f}".format(ctx.forecast_next_30_days.upper_bound) }}</div></div>
+  </div>
+
+  <h2>Risk Analysis</h2>
+  <table>
+    <thead><tr><th>Risk Level</th><th>Customer Count</th></tr></thead>
+    <tbody>
+    {% for level, count in ctx.risk_summary.items() %}
+      <tr><td>{{ level }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Anomalies Detected</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Metric</th><th>Type</th></tr></thead>
+    <tbody>
+    {% for a in ctx.anomalies %}
+      <tr><td>{{ a.date }}</td><td>{{ a.metric }}</td><td>{{ a.type }}</td></tr>
+    {% else %}
+      <tr><td colspan="3">No significant anomalies detected.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Business Recommendations</h2>
+  <table>
+    <thead><tr><th>Problem</th><th>Recommendation</th></tr></thead>
+    <tbody>
+    {% for r in ctx.recommendations %}
+      <tr><td>{{ r.problem }}</td><td>{{ r.recommendation }}</td></tr>
+    {% else %}
+      <tr><td colspan="2">No urgent recommendations — key metrics look healthy.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin-top:40px; font-size:0.78rem; color:#8a93a8; font-family:'Segoe UI',sans-serif;">
+    Generated automatically by the NEXORA Business Intelligence &amp; Sales Analytics System.
+  </p>
+</body>
+</html>

@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+database/sales.db
+data/uploaded_*
+.DS_Store
+venv/

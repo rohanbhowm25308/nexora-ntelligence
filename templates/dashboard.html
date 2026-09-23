@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — NEXORA Intelligence</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') + '?v=1790054432' }}">
+<script src="{{ url_for('static', filename='js/vendor/chart.umd.js') + '?v=1789926971' }}"></script>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark"></span>NEXORA</div>
+
+    <div class="nav-group-label">DATA</div>
+    <div class="nav-item" data-view="upload"><span class="dot"></span>Upload &amp; Data Quality</div>
+    <div class="nav-item" data-view="report"><span class="dot"></span>Executive Report</div>
+
+    <div class="nav-group-label">COMMAND CENTER</div>
+    <div class="nav-item" data-view="commandcenter"><span class="dot"></span>Executive Command Center</div>
+    <div class="nav-item" data-view="copilot"><span class="dot"></span>AI Business Copilot</div>
+    <div class="nav-item" data-view="simulator"><span class="dot"></span>What-If Simulator</div>
+    <div class="nav-item" data-view="rootcause"><span class="dot"></span>Root-Cause Analysis</div>
+    <div class="nav-item" data-view="nba"><span class="dot"></span>Next-Best-Action</div>
+
+    <div class="nav-group-label">OVERVIEW</div>
+    <div class="nav-item active" data-view="overview"><span class="dot"></span>Executive Dashboard</div>
+    <div class="nav-item" data-view="forecast"><span class="dot"></span>Sales Forecasting</div>
+    <div class="nav-item" data-view="alerts"><span class="dot"></span>Alerts &amp; Health</div>
+
+    <div class="nav-group-label">CUSTOMERS</div>
+    <div class="nav-item" data-view="segments"><span class="dot"></span>RFM Segmentation</div>
+    <div class="nav-item" data-view="churn"><span class="dot"></span>Churn &amp; Risk</div>
+    <div class="nav-item" data-view="clv"><span class="dot"></span>Lifetime Value</div>
+    <div class="nav-item" data-view="customer360"><span class="dot"></span>Customer 360°</div>
+    <div class="nav-item" data-view="cohorts"><span class="dot"></span>Retention Cohorts</div>
+
+    <div class="nav-group-label">PRODUCTS &amp; MARKET</div>
+    <div class="nav-item" data-view="products"><span class="dot"></span>Profitability Matrix</div>
+    <div class="nav-item" data-view="discounts"><span class="dot"></span>Discount Impact</div>
+    <div class="nav-item" data-view="basket"><span class="dot"></span>Market Basket</div>
+    <div class="nav-item" data-view="regions"><span class="dot"></span>Regional Intelligence</div>
+    <div class="nav-item" data-view="seasonality"><span class="dot"></span>Seasonal Demand</div>
+
+    <div class="nav-group-label">INTELLIGENCE</div>
+    <div class="nav-item" data-view="insights"><span class="dot"></span>AI Business Insights</div>
+    <div class="nav-item" data-view="revenuescan"><span class="dot"></span>Revenue Opportunity Scanner</div>
+    <div class="nav-item" data-view="recommendations"><span class="dot"></span>Recommendations</div>
+    <div class="nav-item" data-view="anomalies"><span class="dot"></span>Anomaly Detection</div>
+    <div class="nav-item" data-view="goals"><span class="dot"></span>KPI Goal Tracking</div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="view active" id="view-overview">
+      <div class="topbar">
+        <div>
+          <h1>Executive Intelligence Dashboard</h1>
+          <div class="sub">Live KPIs computed from your cleaned sales data</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" onclick="Nexora.go('upload')">⬆ Upload Data</button>
+          <button class="icon-btn primary" onclick="Nexora.go('report')">📄 Generate Report</button>
+        </div>
+      </div>
+
+      <div id="demo-banner" class="alert-item" style="display:none; align-items:center; justify-content:space-between; background:rgba(255,194,102,0.08); border-color:rgba(255,194,102,0.28); margin-bottom:18px;">
+        <span>📊 You're viewing a <strong>demo dataset</strong> (auto-generated sample data) — upload your own file to see your real numbers.</span>
+        <button class="icon-btn primary" style="flex-shrink:0; margin-left:16px;" onclick="Nexora.go('upload')">⬆ Upload Your Data</button>
+      </div>
+
+      <div class="grid cols-4 section-block" id="kpi-cards"></div>
+
+      <div class="grid cols-2 section-block">
+        <div class="card">
+          <h3>Monthly Revenue &amp; Profit Trend</h3>
+          <div class="chart-wrap"><canvas id="chart-monthly-trend"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Top Products by Revenue</h3>
+          <div class="chart-wrap"><canvas id="chart-top-products"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2 section-block">
+        <div class="card">
+          <h3>Top Customers</h3>
+          <table><thead><tr><th>Customer</th><th>Orders</th><th>Total Spent</th><th>Last Purchase</th></tr></thead>
+          <tbody id="table-top-customers"><tr class="loading-row"><td colspan="4">Loading…</td></tr></tbody></table>
+        </div>
+        <div class="card">
+          <h3>Category Performance</h3>
+          <div class="chart-wrap"><canvas id="chart-category"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EXECUTIVE COMMAND CENTER ============ -->
+    <section class="view" id="view-commandcenter">
+      <div class="topbar">
+        <div><h1>Executive Command Center</h1><div class="sub">The one page for management — health, issues, and opportunities at a glance</div></div>
+        <div class="topbar-actions">
+          <button class="icon-btn primary" onclick="window.location='/api/report/download'">⬇ Download Report</button>
+        </div>
+      </div>
+      <div class="grid cols-3 section-block">
+        <div class="card kpi-card" style="grid-column: span 1;">
+          <div class="label">Business Health</div>
+          <div class="value" id="cc-health-score">—</div>
+          <div class="delta" id="cc-health-status"></div>
+        </div>
+        <div class="card kpi-card"><div class="label">Total Customers</div><div class="value" id="cc-customers">—</div></div>
+        <div class="card kpi-card"><div class="label">At-Risk Customers</div><div class="value" id="cc-at-risk">—</div></div>
+      </div>
+      <div class="grid cols-4 section-block" id="cc-kpi-cards"></div>
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>🚨 Top 3 Issues</h3>
+          <div class="rec-list" id="cc-issues"></div>
+        </div>
+        <div class="card">
+          <h3>💡 Top 3 Opportunities</h3>
+          <div class="rec-list" id="cc-opportunities"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AI BUSINESS COPILOT ============ -->
+    <section class="view" id="view-copilot">
+      <div class="topbar"><div><h1>AI Business Copilot</h1><div class="sub">Ask questions — every answer is grounded in your actual uploaded data, not generic knowledge</div></div></div>
+      <div class="card">
+        <div id="copilot-chat" style="display:flex; flex-direction:column; gap:14px; min-height:320px; max-height:50vh; overflow-y:auto; margin-bottom:16px;">
+          <div class="alert-item" style="background:rgba(79,216,255,0.06); border-color:var(--border-strong);">👋 Ask me anything about your business — e.g. "Why did profit decrease this month?"</div>
+        </div>
+        <div id="copilot-suggestions" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
+        <div class="search-box">
+          <input id="copilot-input" placeholder="Ask a question about your business…" onkeydown="if(event.key==='Enter')Nexora.askCopilot()" />
+          <button id="copilot-mic-btn" class="icon-btn" title="Speak your question" onclick="Nexora.toggleVoiceInput()" style="flex-shrink:0; padding:11px 14px;">🎤</button>
+          <button onclick="Nexora.askCopilot()">Ask</button>
+          <button id="copilot-speak-btn" class="icon-btn" title="Read the latest answer aloud" onclick="Nexora.speakLastCopilotAnswer()" style="flex-shrink:0; padding:11px 14px;">🔊</button>
+        </div>
+        <div id="copilot-mic-status" style="display:none; margin-top:8px; font-size:0.8rem; color:var(--danger); align-items:center; gap:6px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:var(--danger); display:inline-block; animation:pulse 1s infinite;"></span>
+          Listening… speak your question, then press Ask or Enter.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WHAT-IF SIMULATOR ============ -->
+    <section class="view" id="view-simulator">
+      <div class="topbar"><div><h1>What-If Business Simulator</h1><div class="sub">Adjust levers and see projected revenue, profit and margin impact instantly</div></div></div>
+      <div class="grid cols-2 section-block">
+        <div class="card">
+          <h3>Adjust the Levers</h3>
+          <div class="goal-row"><label>Discount % change</label><input type="range" id="sim-discount" min="-10" max="10" value="0" step="0.5" oninput="Nexora.runSimulator()"><span id="sim-discount-val" class="tag">0%</span></div>
+          <div class="goal-row"><label>Expected orders</label><input type="range" id="sim-orders" min="-30" max="30" value="0" step="1" oninput="Nexora.runSimulator()"><span id="sim-orders-val" class="tag">0%</span></div>
+          <div class="goal-row"><label>Marketing budget</label><input type="range" id="sim-marketing" min="-50" max="100" value="0" step="5" oninput="Nexora.runSimulator()"><span id="sim-marketing-val" class="tag">0%</span></div>
+          <div class="goal-row"><label>Product price</label><input type="range" id="sim-price" min="-15" max="15" value="0" step="0.5" oninput="Nexora.runSimulator()"><span id="sim-price-val" class="tag">0%</span></div>
+          <div class="goal-row"><label>Retention rate</label><input type="range" id="sim-retention" min="-15" max="15" value="0" step="1" oninput="Nexora.runSimulator()"><span id="sim-retention-val" class="tag">0%</span></div>
+          <button class="icon-btn" onclick="Nexora.resetSimulator()">↺ Reset</button>
+        </div>
+        <div class="card">
+          <h3>Simulation Result <span class="tag">Scenario estimate, not guaranteed</span></h3>
+          <div class="grid cols-2" id="sim-results"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Scenario Comparison — Current vs. Proposed</h3>
+        <table><thead><tr><th></th><th>Current Strategy</th><th>Proposed Strategy (levers above)</th><th>Difference</th></tr></thead>
+        <tbody id="table-scenario"><tr class="loading-row"><td colspan="4">Adjust the levers above to compare.</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ ROOT-CAUSE ANALYSIS ============ -->
+    <section class="view" id="view-rootcause">
+      <div class="topbar"><div><h1>Root-Cause Analysis Engine</h1><div class="sub">Not just what changed — why it changed</div></div></div>
+      <div class="card section-block" id="rc-summary"></div>
+      <div class="card">
+        <h3>Contributing Factors (ranked by impact)</h3>
+        <table><thead><tr><th>Factor</th><th>Detail</th></tr></thead>
+        <tbody id="table-rootcause"><tr class="loading-row"><td colspan="2">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ NEXT-BEST-ACTION ============ -->
+    <section class="view" id="view-nba">
+      <div class="topbar"><div><h1>Next-Best-Action</h1><div class="sub">Every prediction paired with one concrete recommended action</div></div></div>
+      <div class="card section-block">
+        <h3>Customers</h3>
+        <table><thead><tr><th>Customer</th><th>Segment</th><th>Risk</th><th>CLV</th><th>Recommended Action</th></tr></thead>
+        <tbody id="table-nba-customers"><tr class="loading-row"><td colspan="5">Loading…</td></tr></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Products</h3>
+        <table><thead><tr><th>Product</th><th>Revenue</th><th>Profit</th><th>Quadrant</th><th>Recommended Action</th></tr></thead>
+        <tbody id="table-nba-products"><tr class="loading-row"><td colspan="5">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ FORECAST ============ -->
+    <section class="view" id="view-forecast">
+      <div class="topbar"><div><h1>AI-Powered Sales Forecasting</h1><div class="sub">Trend + seasonality regression model, with a Prediction Confidence Center</div></div></div>
+      <div class="grid cols-3 section-block" id="forecast-cards"></div>
+      <div class="card section-block">
+        <h3>Actual vs. Predicted Revenue (last 120 days) <span class="tag" id="forecast-meta">—</span></h3>
+        <div class="chart-wrap"><canvas id="chart-actual-vs-predicted"></canvas></div>
+      </div>
+      <div class="card section-block">
+        <h3>Next 30-Day Daily Forecast</h3>
+        <div class="chart-wrap"><canvas id="chart-future-forecast"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Forecast vs. Actual Monitoring <span class="tag" id="fm-accuracy">—</span></h3>
+        <table><thead><tr><th>Week Ending</th><th>Forecast</th><th>Actual</th><th>Error %</th></tr></thead>
+        <tbody id="table-forecast-monitor"><tr class="loading-row"><td colspan="4">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ ALERTS / HEALTH ============ -->
+    <section class="view" id="view-alerts">
+      <div class="topbar"><div><h1>Business Health Scorecard</h1><div class="sub">Rule-based status across core KPIs, plus severity-tiered smart alerts</div></div></div>
+      <div class="grid cols-2 section-block">
+        <div class="card">
+          <h3>Health Scorecard</h3>
+          <table><thead><tr><th>KPI</th><th>Value</th><th>Status</th></tr></thead>
+          <tbody id="table-health"><tr class="loading-row"><td colspan="3">Loading…</td></tr></tbody></table>
+        </div>
+        <div class="card">
+          <h3>Smart Alerts</h3>
+          <div class="alert-list" id="alert-list"></div>
+        </div>
+      </div>
+      <div class="grid cols-3">
+        <div class="card"><h3>🔴 Critical</h3><div class="rec-list" id="tiered-critical"></div></div>
+        <div class="card"><h3>🟡 Warning</h3><div class="rec-list" id="tiered-warning"></div></div>
+        <div class="card"><h3>🔵 Opportunity</h3><div class="rec-list" id="tiered-opportunity"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ RFM SEGMENTS ============ -->
+    <section class="view" id="view-segments">
+      <div class="topbar"><div><h1>Advanced RFM Customer Segmentation</h1><div class="sub">Recency · Frequency · Monetary scoring</div></div></div>
+      <div class="grid cols-2 section-block">
+        <div class="card">
+          <h3>Segment Size &amp; Revenue Share</h3>
+          <div class="chart-wrap"><canvas id="chart-rfm-segments"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Revenue Contribution by Segment</h3>
+          <div class="chart-wrap"><canvas id="chart-rfm-revenue"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Customers</h3>
+        <table><thead><tr><th>Customer</th><th>RFM</th><th>Segment</th><th>Behavior</th><th>Recency</th><th>Frequency</th><th>Monetary</th></tr></thead>
+        <tbody id="table-rfm-customers"><tr class="loading-row"><td colspan="7">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ CHURN / RISK ============ -->
+    <section class="view" id="view-churn">
+      <div class="topbar"><div><h1>Customer Churn &amp; Risk Prediction</h1><div class="sub">RandomForestClassifier trained on RFM behavioral features</div></div></div>
+      <div class="grid cols-3 section-block" id="risk-summary-cards"></div>
+      <div class="card section-block" id="model-performance-card">
+        <h3>Model Performance Center <span class="tag">RandomForestClassifier</span></h3>
+        <div id="model-metrics-body">Loading…</div>
+      </div>
+      <div class="card">
+        <h3>At-Risk Customers</h3>
+        <table><thead><tr><th>Customer</th><th>Segment</th><th>Risk</th><th>Probability</th><th>Why?</th></tr></thead>
+        <tbody id="table-churn"><tr class="loading-row"><td colspan="5">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ CLV ============ -->
+    <section class="view" id="view-clv">
+      <div class="topbar"><div><h1>Customer Lifetime Value</h1><div class="sub">12-month forward estimate from order value, frequency &amp; margin</div></div></div>
+      <div class="grid cols-3 section-block" id="clv-summary-cards"></div>
+      <div class="card">
+        <h3>Customers by CLV</h3>
+        <table><thead><tr><th>Customer</th><th>CLV Estimate</th><th>Tier</th><th>Segment</th><th>Behavior Profile</th></tr></thead>
+        <tbody id="table-clv"><tr class="loading-row"><td colspan="5">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ CUSTOMER 360 ============ -->
+    <section class="view" id="view-customer360">
+      <div class="topbar"><div><h1>Customer 360° Profile</h1><div class="sub">Search by Customer ID to view the full profile</div></div></div>
+      <div class="search-box">
+        <input id="customer-search" placeholder="e.g. CUST00042 — try any ID from the Segmentation or Churn tables" />
+        <button onclick="Nexora.searchCustomer()">View Profile</button>
+      </div>
+      <div id="customer360-result"></div>
+    </section>
+
+    <!-- ============ COHORTS ============ -->
+    <section class="view" id="view-cohorts">
+      <div class="topbar"><div><h1>Customer Retention Cohorts</h1><div class="sub">% of each signup cohort still purchasing in later months</div></div></div>
+      <div class="card"><div style="overflow-x:auto;"><table id="cohort-table"><tbody><tr class="loading-row"><td>Loading…</td></tr></tbody></table></div></div>
+    </section>
+
+    <!-- ============ PRODUCT MATRIX ============ -->
+    <section class="view" id="view-products">
+      <div class="topbar"><div><h1>Product Profitability Matrix</h1><div class="sub">Sales volume vs. profit — four strategic quadrants</div></div></div>
+      <div class="quadrant-grid" id="quadrant-grid"></div>
+    </section>
+
+    <!-- ============ DISCOUNTS ============ -->
+    <section class="view" id="view-discounts">
+      <div class="topbar"><div><h1>Discount Impact Analyzer</h1><div class="sub">Does discounting actually help profit?</div></div></div>
+      <div class="card"><div class="chart-wrap"><canvas id="chart-discount"></canvas></div></div>
+    </section>
+
+    <!-- ============ MARKET BASKET ============ -->
+    <section class="view" id="view-basket">
+      <div class="topbar"><div><h1>Market Basket Analysis</h1><div class="sub">Products frequently purchased together</div></div></div>
+      <div class="card">
+        <table><thead><tr><th>Product A</th><th>Product B</th><th>Times Bought Together</th></tr></thead>
+        <tbody id="table-basket"><tr class="loading-row"><td colspan="3">Loading…</td></tr></tbody></table>
+      </div>
+      <div class="card section-block" style="margin-top:16px;">
+        <h3>Profit Leakage Alerts</h3>
+        <table><thead><tr><th>Product</th><th>Category</th><th>Revenue</th><th>Avg Discount</th><th>Margin %</th></tr></thead>
+        <tbody id="table-leakage"><tr class="loading-row"><td colspan="5">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ REGIONS ============ -->
+    <section class="view" id="view-regions">
+      <div class="topbar"><div><h1>Regional Opportunity Map</h1><div class="sub">Click a region to drill down: Region → Category → Product → Customer</div></div></div>
+      <div class="card section-block">
+        <table><thead><tr><th>Region</th><th>Revenue</th><th>Profit</th><th>Orders</th><th>Customers</th><th>AOV</th><th>Margin %</th><th>Growth %</th><th>Status</th></tr></thead>
+        <tbody id="table-regions"><tr class="loading-row"><td colspan="9">Loading…</td></tr></tbody></table>
+      </div>
+      <div id="region-drilldown"></div>
+    </section>
+
+    <!-- ============ SEASONALITY ============ -->
+    <section class="view" id="view-seasonality">
+      <div class="topbar"><div><h1>Seasonal Demand Intelligence</h1><div class="sub">Where demand rises and falls through the year</div></div></div>
+      <div class="grid cols-2">
+        <div class="card"><h3>Revenue by Month</h3><div class="chart-wrap"><canvas id="chart-season-month"></canvas></div></div>
+        <div class="card"><h3>Revenue by Day of Week</h3><div class="chart-wrap"><canvas id="chart-season-dow"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- ============ AI INSIGHTS ============ -->
+    <section class="view" id="view-insights">
+      <div class="topbar"><div><h1>Automated Business Insight Generator</h1><div class="sub">Groq LLM narrative, grounded in your live KPI data</div></div></div>
+      <div class="card">
+        <h3 style="display:flex; align-items:center; justify-content:space-between;">
+          <span>Executive Summary</span>
+          <button class="icon-btn" title="Read this insight aloud" onclick="Nexora.speakElement('ai-insight-text', this)" style="padding:7px 12px; font-size:0.78rem;">🔊 Listen</button>
+        </h3>
+        <div class="insight-box" id="ai-insight-text">Generating insight…</div>
+      </div>
+      <div class="card section-block" style="margin-top:16px;">
+        <h3>Revenue Opportunities</h3>
+        <table><thead><tr><th>Opportunity</th><th>Potential Impact</th><th>Reason</th><th>Recommended Action</th></tr></thead>
+        <tbody id="table-opportunities"><tr class="loading-row"><td colspan="4">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ REVENUE OPPORTUNITY SCANNER ============ -->
+    <section class="view" id="view-revenuescan">
+      <div class="topbar"><div><h1>Revenue Opportunity Scanner</h1><div class="sub">Automatically discovered opportunities with an estimated ₹ impact</div></div></div>
+      <div class="grid cols-2" id="revenue-scan-cards"></div>
+    </section>
+
+    <!-- ============ RECOMMENDATIONS ============ -->
+    <section class="view" id="view-recommendations">
+      <div class="topbar"><div><h1>Recommendation Engine</h1><div class="sub">Detected problem → recommended business action</div></div></div>
+      <div class="rec-list" id="rec-list"></div>
+    </section>
+
+    <!-- ============ ANOMALIES ============ -->
+    <section class="view" id="view-anomalies">
+      <div class="topbar"><div><h1>Sales Anomaly Detection</h1><div class="sub">Statistical outliers (|z| &gt; 2.5) across revenue, orders, discount and profit</div></div></div>
+      <div class="card">
+        <table><thead><tr><th>Date</th><th>Metric</th><th>Value</th><th>Type</th></tr></thead>
+        <tbody id="table-anomalies"><tr class="loading-row"><td colspan="4">Loading…</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ GOALS ============ -->
+    <section class="view" id="view-goals">
+      <div class="topbar"><div><h1>KPI Goal Tracking</h1><div class="sub">Set targets and track achievement in real time</div></div></div>
+      <div class="card" style="max-width:560px;">
+        <div class="goal-row"><label>Revenue Target (₹)</label><input id="goal-revenue" type="number" /></div>
+        <div class="goal-row"><label>Profit Target (₹)</label><input id="goal-profit" type="number" /></div>
+        <div class="goal-row"><label>Orders Target</label><input id="goal-orders" type="number" /></div>
+        <button class="icon-btn primary" onclick="Nexora.saveGoals()">Save Targets</button>
+      </div>
+      <div class="grid cols-3 section-block" id="goal-progress-cards" style="margin-top:18px;"></div>
+    </section>
+
+    <!-- ============ UPLOAD ============ -->
+    <section class="view" id="view-upload">
+      <div class="topbar"><div><h1>Upload → Analyze → Report</h1><div class="sub">Bring your own CSV/Excel sales dataset, or explore with demo data</div></div></div>
+      <div id="upload-status-banner" class="alert-item" style="align-items:center; justify-content:space-between; margin-bottom:16px;"></div>
+      <div class="card">
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+          <div style="font-size:2rem; margin-bottom:10px;">⬆</div>
+          <div>Click to choose a CSV or Excel file, or drop it here</div>
+          <div style="font-size:0.78rem;color:var(--text-3);margin-top:6px;">
+            Expected columns: order_id, order_date, customer_id, customer_name, region, product_id, product_name, category, quantity, unit_price, discount_pct, revenue, cost, profit, payment_method, order_status
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none;" onchange="Nexora.uploadFile(this.files[0])" />
+        <div style="text-align:center; margin-top:16px; color:var(--text-3); font-size:0.82rem;">— or —</div>
+        <div style="text-align:center; margin-top:12px;">
+          <button class="icon-btn" onclick="Nexora.loadDemoData()">🧪 Load Demo Dataset</button>
+        </div>
+      </div>
+      <div class="card section-block" style="margin-top:16px;">
+        <h3>Data Quality Score</h3>
+        <div id="quality-report-body">Run an upload, or load the sample dataset, to see the quality report.</div>
+      </div>
+      <div class="card section-block" style="margin-top:16px;">
+        <h3>🕵️ Data Detective <span class="tag" id="detective-count">—</span></h3>
+        <div class="rec-list" id="detective-list"></div>
+      </div>
+      <div class="topbar-actions section-block" style="margin-top:16px;">
+        <button class="icon-btn" onclick="window.location='/api/data/download'">⬇ Download Cleaned Dataset</button>
+      </div>
+    </section>
+
+    <!-- ============ REPORT ============ -->
+    <section class="view" id="view-report">
+      <div class="topbar">
+        <div><h1>One-Click Executive Report</h1><div class="sub">KPIs, forecast, risk, and recommendations — narrated automatically</div></div>
+        <div class="topbar-actions">
+          <button class="icon-btn primary" onclick="window.location='/api/report/download'">⬇ Download Report</button>
+        </div>
+      </div>
+      <div class="card">
+        <iframe src="/api/report" style="width:100%; height:75vh; border:none; border-radius:12px; background:white;"></iframe>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/background.js') + '?v=1789969631' }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') + '?v=1790074702' }}"></script>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="footer-credit">
+      Designed &amp; Developed by <span class="footer-name">Rohan Bhowmik</span>
+    </p>
+    <div class="footer-socials">
+      <a href="https://linkedin.com/in/your-linkedin-id" class="social-btn linkedin" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.15 1.45-2.15 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>
+        <span>LinkedIn</span>
+      </a>
+      <a href="https://github.com/rohanbhowm25308" class="social-btn github" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.2c0 4.5 2.87 8.32 6.84 9.67.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.78.61-3.37-1.21-3.37-1.21-.45-1.18-1.11-1.49-1.11-1.49-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.95.68 1.92 0 1.39-.01 2.5-.01 2.85 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.2C22 6.58 17.52 2 12 2z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <a href="https://www.instagram.com/rohan_._.bhowmik.84/" class="social-btn instagram" target="_blank" rel="noopener noreferrer" aria-label="Instagram profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <span>Instagram</span>
+      </a>
+    </div>
+    <p class="footer-copy">&copy; 2026 NEXORA Intelligence. All rights reserved.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXORA Intelligence — Business Intelligence & Sales Analytics System</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') + '?v=1790054432' }}">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="landing">
+  <nav class="landing-nav">
+    <div class="brand"><span class="brand-mark"></span>NEXORA Intelligence</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="/dashboard">Live Dashboard</a>
+      <a href="/dashboard#commandcenter">Command Center</a>
+      <a href="/dashboard#copilot">AI Copilot</a>
+      <a href="/dashboard#simulator">What-If Simulator</a>
+      <a href="/dashboard#report">Executive Report</a>
+    </div>
+    <a href="/dashboard" class="nav-cta">Launch Dashboard</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-content">
+      <span class="eyebrow">Global Business Intelligence · Predictive Analytics</span>
+      <h1>Turn raw sales data into decisions management actually acts on.</h1>
+      <p class="lead">
+        NEXORA ingests your sales data, cleans it automatically, and runs RFM
+        segmentation, churn prediction, revenue forecasting, and anomaly
+        detection behind a single executive dashboard — with plain-language
+        insights generated for every number it shows.
+      </p>
+      <div class="hero-actions">
+        <a href="/dashboard" class="btn-primary">Open Executive Dashboard</a>
+        <a href="/dashboard#upload" class="btn-ghost">Upload Your Dataset</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><b>30+</b><span>Analytics &amp; ML modules</span></div>
+        <div class="stat"><b>&lt;2 min</b><span>Upload to insight</span></div>
+        <div class="stat"><b>Live</b><span>Groq-powered narratives</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="mindmap-panel">
+        <div class="mindmap-panel-glow"></div>
+        <div class="mindmap">
+        <svg class="mm-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="mmLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4fd8ff" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#9a7bff" stop-opacity="0.75"/>
+            </linearGradient>
+          </defs>
+          <g id="mm-line-group"></g>
+        </svg>
+
+        <div class="mm-hub">
+          <div class="mm-hub-icon">📈</div>
+          <div class="mm-hub-title">Business Intelligence<br>&amp; Sales Analytics</div>
+          <div class="mm-hub-sub">Predictive Insights<br>for Smarter Decisions</div>
+        </div>
+
+        <div class="mm-node mm-cyan mm-out-left" style="left:32.00%; top:8.00%;">
+          <div class="mm-icon">📈</div>
+          <div class="mm-label"><div class="mm-title">Sales Analytics</div><div class="mm-sub">Track • Analyze • Grow</div></div>
+        </div>
+        <div class="mm-node mm-cyan mm-out-right" style="left:68.00%; top:8.00%;">
+          <div class="mm-icon">📍</div>
+          <div class="mm-label"><div class="mm-title">Regional Performance</div><div class="mm-sub">Compare • Analyze • Improve</div></div>
+        </div>
+
+        <div class="mm-node mm-purple mm-out-right" style="left:86.00%; top:24.00%;">
+          <div class="mm-icon">📊</div>
+          <div class="mm-label"><div class="mm-title">Forecasting</div><div class="mm-sub">Predict • Plan • Scale</div></div>
+        </div>
+        <div class="mm-node mm-purple mm-out-right" style="left:86.00%; top:50.00%;">
+          <div class="mm-icon">🧠</div>
+          <div class="mm-label"><div class="mm-title">Predictive Analytics</div><div class="mm-sub">Churn • Demand • Insights</div></div>
+        </div>
+        <div class="mm-node mm-gold mm-out-right" style="left:86.00%; top:76.00%;">
+          <div class="mm-icon">💡</div>
+          <div class="mm-label"><div class="mm-title">Business Insights</div><div class="mm-sub">Discover • Understand • Act</div></div>
+        </div>
+
+        <div class="mm-node mm-purple mm-out-left" style="left:32.00%; top:92.00%;">
+          <div class="mm-icon">📄</div>
+          <div class="mm-label"><div class="mm-title">Automated Reports</div><div class="mm-sub">Generate • Share • Download</div></div>
+        </div>
+        <div class="mm-node mm-cyan mm-out-right" style="left:68.00%; top:92.00%;">
+          <div class="mm-icon">🖥️</div>
+          <div class="mm-label"><div class="mm-title">Streamlit Dashboard</div><div class="mm-sub">Interactive • Real-time • User Friendly</div></div>
+        </div>
+
+        <div class="mm-node mm-gold mm-out-left" style="left:14.00%; top:76.00%;">
+          <div class="mm-icon">📦</div>
+          <div class="mm-label"><div class="mm-title">Product Intelligence</div><div class="mm-sub">Performance • Profitability • Trends</div></div>
+        </div>
+        <div class="mm-node mm-purple mm-out-left" style="left:14.00%; top:50.00%;">
+          <div class="mm-icon">👥</div>
+          <div class="mm-label"><div class="mm-title">Customer Segmentation</div><div class="mm-sub">RFM • Behavior • Value</div></div>
+        </div>
+        <div class="mm-node mm-cyan mm-out-left" style="left:14.00%; top:24.00%;">
+          <div class="mm-icon">🗄️</div>
+          <div class="mm-label"><div class="mm-title">Data Management</div><div class="mm-sub">Clean • Transform • Store</div></div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="features-section" id="features">
+    <h2>One pipeline — from a raw spreadsheet to an executive report.</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="fico">📊</span>
+        <h3>Executive KPI Dashboard</h3>
+        <p>Revenue, profit, AOV, margin, repeat-rate and growth, refreshed the moment new data lands.</p>
+      </div>
+      <div class="feature-card" id="predictive-engine">
+        <span class="fico">🔮</span>
+        <h3>AI Sales Forecasting</h3>
+        <p>7 / 30 / 90-day revenue forecasts with confidence bands from a trend + seasonality model.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">🚨</span>
+        <h3>Churn &amp; Risk Prediction</h3>
+        <p>Every customer scored Low/Medium/High risk with the exact factors driving the score.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">👥</span>
+        <h3>RFM Segmentation</h3>
+        <p>VIP, Loyal, At Risk and Lost segments sized by customer count and revenue contribution.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">💎</span>
+        <h3>Customer 360° &amp; CLV</h3>
+        <p>A full profile per customer — spend, favorites, risk, lifetime value and purchase timeline.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">🧠</span>
+        <h3>Automated Insight Generator</h3>
+        <p>Groq-powered narrative summaries of what actually changed and why, in plain business language.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">💡</span>
+        <h3>Recommendation Engine</h3>
+        <p>Detected problems are paired with a concrete recommended action, not just a chart.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">📈</span>
+        <h3>Product Profitability Matrix</h3>
+        <p>Stars, Profit Leaders, Revenue Drivers and Weak products mapped on sales vs. profit.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">🔍</span>
+        <h3>Anomaly &amp; Leakage Detection</h3>
+        <p>Statistical outlier detection flags revenue drops, order spikes and profit leakage automatically.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">🛒</span>
+        <h3>Market Basket Analysis</h3>
+        <p>Discovers which products are frequently bought together to power bundling decisions.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">🧹</span>
+        <h3>Automated Data Quality</h3>
+        <p>Every upload is scored and cleaned — missing values, duplicates and outliers, handled for you.</p>
+      </div>
+      <div class="feature-card">
+        <span class="fico">📄</span>
+        <h3>One-Click Executive Report</h3>
+        <p>A complete, narrated report — KPIs, forecast, risk, recommendations — generated on demand.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/background.js') + '?v=1789969631' }}"></script>
+<script>
+  // 1) Nudge any node that overflows the panel back inside it, measured
+  //    from real rendered geometry (robust to any width, zoom, or DPI).
+  // 2) Draw static hub-to-icon connector lines from each icon's actual
+  //    final position, so lines always meet the icon exactly.
+  // 3) Animate a traveling data-flow dot along each connector line, on
+  //    a continuous loop from the hub out to the icon.
+  (function () {
+    const panel = document.querySelector(".mindmap-panel");
+    const mindmap = document.querySelector(".mindmap");
+    const hub = document.querySelector(".mm-hub");
+    const group = document.getElementById("mm-line-group");
+    const defs = document.querySelector(".mm-lines defs");
+    if (!panel || !mindmap || !hub || !group) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const MARGIN = 4; // keep a small breathing gap from the panel edge
+    let connectors = []; // {x1,y1,x2,y2,dotEl,phase}
+
+    function pct(rect, ref) {
+      return {
+        x: ((rect.left + rect.width / 2) - ref.left) / ref.width * 100,
+        y: ((rect.top + rect.height / 2) - ref.top) / ref.height * 100,
+      };
+    }
+
+    function layout() {
+      // Reset any previous nudge before measuring fresh
+      document.querySelectorAll(".mm-node").forEach((n) => {
+        n.style.setProperty("--nx", "0px");
+        n.style.setProperty("--ny", "0px");
+      });
+
+      const panelRect = panel.getBoundingClientRect();
+      const bounds = {
+        left: panelRect.left + MARGIN,
+        right: panelRect.right - MARGIN,
+        top: panelRect.top + MARGIN,
+        bottom: panelRect.bottom - MARGIN,
+      };
+
+      document.querySelectorAll(".mm-node").forEach((node) => {
+        const r = node.getBoundingClientRect();
+        let dx = 0, dy = 0;
+        if (r.left < bounds.left) dx = bounds.left - r.left;
+        else if (r.right > bounds.right) dx = bounds.right - r.right;
+        if (r.top < bounds.top) dy = bounds.top - r.top;
+        else if (r.bottom > bounds.bottom) dy = bounds.bottom - r.bottom;
+        if (dx) node.style.setProperty("--nx", dx.toFixed(1) + "px");
+        if (dy) node.style.setProperty("--ny", dy.toFixed(1) + "px");
+      });
+
+      // (Re)build static lines + persistent animated dots
+      group.innerHTML = "";
+      if (defs) {
+        defs.querySelectorAll('linearGradient[id^="mmLineGrad"]').forEach((g) => g.remove());
+      }
+      connectors = [];
+      const mapRect = mindmap.getBoundingClientRect();
+      const hc = pct(hub.getBoundingClientRect(), mapRect);
+
+      document.querySelectorAll(".mm-node").forEach((node, i) => {
+        const icon = node.querySelector(".mm-icon");
+        if (!icon) return;
+        const ic = pct(icon.getBoundingClientRect(), mapRect);
+
+        // Per-line gradient along this line's own direction, so every line
+        // gets a real cyan(hub)->violet(node) transition — a single shared
+        // diagonal gradient would wash out near-horizontal/vertical lines.
+        const gradId = "mmLineGrad" + i;
+        const grad = document.createElementNS(ns, "linearGradient");
+        grad.setAttribute("id", gradId);
+        grad.setAttribute("gradientUnits", "userSpaceOnUse");
+        grad.setAttribute("x1", hc.x.toFixed(2)); grad.setAttribute("y1", hc.y.toFixed(2));
+        grad.setAttribute("x2", ic.x.toFixed(2)); grad.setAttribute("y2", ic.y.toFixed(2));
+        const stop1 = document.createElementNS(ns, "stop");
+        stop1.setAttribute("offset", "0%"); stop1.setAttribute("stop-color", "#4fd8ff"); stop1.setAttribute("stop-opacity", "0.85");
+        const stop2 = document.createElementNS(ns, "stop");
+        stop2.setAttribute("offset", "100%"); stop2.setAttribute("stop-color", "#9a7bff"); stop2.setAttribute("stop-opacity", "0.85");
+        grad.appendChild(stop1); grad.appendChild(stop2);
+        if (defs) defs.appendChild(grad);
+
+        const line = document.createElementNS(ns, "line");
+        line.setAttribute("x1", hc.x.toFixed(2)); line.setAttribute("y1", hc.y.toFixed(2));
+        line.setAttribute("x2", ic.x.toFixed(2)); line.setAttribute("y2", ic.y.toFixed(2));
+        line.setAttribute("stroke", `url(#${gradId})`);
+        group.appendChild(line);
+
+        const dot = document.createElementNS(ns, "circle");
+        dot.setAttribute("r", "0.75");
+        dot.setAttribute("class", "mm-dot");
+        group.appendChild(dot);
+
+        connectors.push({
+          x1: hc.x, y1: hc.y, x2: ic.x, y2: ic.y,
+          dotEl: dot,
+          phase: i / document.querySelectorAll(".mm-node").length,
+        });
+      });
+    }
+
+    function layoutTwice() {
+      // First pass fixes overflow; second pass rebuilds lines/dots against
+      // the now-nudged icon positions (nudging can shift icons slightly).
+      layout();
+      requestAnimationFrame(layout);
+    }
+
+    // Continuous animation: each dot travels hub -> icon on a loop, with
+    // a soft ease and a fade in/out so it feels like data being released
+    // from the hub and arriving at each module, not a mechanical blink.
+    const DURATION = 2600; // ms for one full hub-to-icon trip
+    function animate(now) {
+      for (const c of connectors) {
+        const t = ((now / DURATION) + c.phase) % 1;
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const x = c.x1 + (c.x2 - c.x1) * eased;
+        const y = c.y1 + (c.y2 - c.y1) * eased;
+        c.dotEl.setAttribute("cx", x.toFixed(2));
+        c.dotEl.setAttribute("cy", y.toFixed(2));
+        const fade = Math.sin(t * Math.PI); // fades in near hub, out near icon
+        c.dotEl.setAttribute("opacity", (0.25 + fade * 0.75).toFixed(2));
+      }
+      requestAnimationFrame(animate);
+    }
+
+    layoutTwice();
+    window.addEventListener("resize", layoutTwice);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(layoutTwice);
+    }
+    requestAnimationFrame(animate);
+  })();
+</script>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="footer-note">Built with Python · Flask · Scikit-learn · SQL · Groq LLM &nbsp;—&nbsp; NEXORA Intelligence Platform</p>
+    <p class="footer-credit">
+      Designed &amp; Developed by <span class="footer-name">Rohan Bhowmik</span>
+    </p>
+    <div class="footer-socials">
+      <a href="https://www.linkedin.com/in/rohan-bhowmik-b014473a1/" class="social-btn linkedin" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.15 1.45-2.15 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>
+        <span>LinkedIn</span>
+      </a>
+      <a href="https://github.com/rohanbhowm25308" class="social-btn github" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.2c0 4.5 2.87 8.32 6.84 9.67.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.78.61-3.37-1.21-3.37-1.21-.45-1.18-1.11-1.49-1.11-1.49-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.95.68 1.92 0 1.39-.01 2.5-.01 2.85 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.2C22 6.58 17.52 2 12 2z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <a href="https://www.instagram.com/rohan_._.bhowmik.84/" class="social-btn instagram" target="_blank" rel="noopener noreferrer" aria-label="Instagram profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <span>Instagram</span>
+      </a>
+    </div>
+    <p class="footer-copy">&copy; 2026 NEXORA Intelligence. All rights reserved.</p>
+  </div>
+</footer>
+</body>
+</html>
