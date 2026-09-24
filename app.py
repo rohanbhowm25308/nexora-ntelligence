@@ -75,11 +75,11 @@ _CACHE = {"df": None, "rfm": None, "clv": None, "churn_model": None,
 # ----------------------------------------------------------------------
 # Data loading / pipeline
 # ----------------------------------------------------------------------
-def load_and_process(csv_path: str, is_demo: bool = False, filename: str = None):
-    raw = pd.read_csv(csv_path)
-    cleaned, quality_report = data_quality.profile_and_clean(raw)
-    db.load_dataframe(cleaned)
-
+def _run_pipeline(cleaned: pd.DataFrame, is_demo: bool, filename: str, quality_report: dict = None):
+    """Compute RFM/CLV/churn from an already-cleaned DataFrame and store
+    everything in _CACHE + persist which dataset is active to SQLite, so
+    a later process restart can recover the real data instead of quietly
+    reverting to the demo dataset (see _recover_persisted_dataset below)."""
     rfm_df = rfm_mod.compute_rfm(cleaned)
     clv_df = rfm_mod.compute_clv(rfm_df)
     model, metrics = churn_model.train_churn_model(rfm_df)
@@ -91,7 +91,37 @@ def load_and_process(csv_path: str, is_demo: bool = False, filename: str = None)
         "churn_scores": churn_scores, "quality_report": quality_report,
         "is_demo": is_demo, "source_filename": filename,
     })
+    db.set_dataset_meta(is_demo, filename)
     return quality_report
+
+
+def load_and_process(csv_path: str, is_demo: bool = False, filename: str = None):
+    raw = pd.read_csv(csv_path)
+    cleaned, quality_report = data_quality.profile_and_clean(raw)
+    db.load_dataframe(cleaned)
+    return _run_pipeline(cleaned, is_demo, filename, quality_report)
+
+
+def _recover_persisted_dataset() -> bool:
+    """Called on a cold worker with nothing in memory yet. If a real
+    (non-demo) dataset was uploaded before this process started -- e.g.
+    the previous worker crashed, timed out, or Render's free tier put the
+    service to sleep and just woke it back up -- rebuild everything from
+    the orders table already sitting in SQLite instead of silently
+    showing demo data. Returns True if it recovered a real dataset."""
+    meta = db.get_dataset_meta()
+    if not meta or meta["is_demo"] or not db.has_data():
+        return False
+    try:
+        cleaned = db.load_orders_table()
+        if len(cleaned) == 0:
+            return False
+        _run_pipeline(cleaned, is_demo=False, filename=meta["source_filename"])
+        app.logger.info(f"Recovered persisted dataset '{meta['source_filename']}' after restart.")
+        return True
+    except Exception:
+        app.logger.exception("Failed to recover persisted dataset after restart; falling back to demo.")
+        return False
 
 
 _LOAD_LOCK = threading.Lock()
@@ -103,6 +133,8 @@ def ensure_loaded():
             # Re-check after acquiring the lock: another thread may have
             # already finished loading while we were waiting for it.
             if _CACHE["df"] is None:
+                if _recover_persisted_dataset():
+                    return
                 if not os.path.exists(DEFAULT_CSV):
                     import subprocess
                     subprocess.run(["python", os.path.join(DATA_DIR, "generate_data.py")],
@@ -296,9 +328,18 @@ def api_customer_360(customer_id):
     churn_df = _CACHE["churn_scores"]
     clv_df = _CACHE["clv"]
 
+    customer_id = customer_id.strip()
     cust_orders = df[df["customer_id"] == customer_id]
     if cust_orders.empty:
-        return jsonify({"error": "Customer not found"}), 404
+        # Case-insensitive fallback (e.g. user typed "cust0001" for "CUST0001")
+        ci_match = df[df["customer_id"].str.lower() == customer_id.lower()]
+        if not ci_match.empty:
+            customer_id = ci_match["customer_id"].iloc[0]
+            cust_orders = ci_match
+        else:
+            sample_ids = df["customer_id"].drop_duplicates().head(3).tolist()
+            hint = f" Try an ID like {', '.join(sample_ids)}." if sample_ids else ""
+            return jsonify({"error": f"No customer found with ID '{customer_id}'.{hint}"}), 404
 
     rfm_row = rfm_df[rfm_df["customer_id"] == customer_id].iloc[0]
     risk_row = churn_df[churn_df["customer_id"] == customer_id].iloc[0]
@@ -481,14 +522,24 @@ def api_ai_insights():
     try:
         text = groq_client.generate_business_insights(kpis, regions, top_products, anomalies)
         return jsonify({"source": "groq-llm", "insights": text})
-    except Exception as e:
+    except groq_client.GroqUnavailable as e:
         fallback = (
             f"Revenue reached ₹{kpis['total_revenue']:,.0f} across {kpis['total_orders']} orders "
             f"at a {kpis['profit_margin_pct']}% profit margin. "
             f"Repeat customer rate stands at {kpis['repeat_customer_rate_pct']}%. "
             f"Top region: {regions[0]['region'] if regions else 'N/A'}."
         )
-        return jsonify({"source": "rule-based-fallback", "insights": fallback, "note": str(e)})
+        return jsonify({"source": "rule-based-fallback", "insights": fallback, "note": str(e), "groq_configured": False})
+    except Exception as e:
+        # Key IS set but the call itself failed (bad/expired key, deprecated
+        # or invalid model name, rate limit, network issue reaching Groq).
+        fallback = (
+            f"Revenue reached ₹{kpis['total_revenue']:,.0f} across {kpis['total_orders']} orders "
+            f"at a {kpis['profit_margin_pct']}% profit margin. "
+            f"Repeat customer rate stands at {kpis['repeat_customer_rate_pct']}%. "
+            f"Top region: {regions[0]['region'] if regions else 'N/A'}."
+        )
+        return jsonify({"source": "rule-based-fallback", "insights": fallback, "note": f"Groq request failed: {e}", "groq_configured": True})
 
 
 # ----------------------------------------------------------------------

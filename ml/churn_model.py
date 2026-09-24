@@ -38,7 +38,13 @@ def train_churn_model(rfm_df: pd.DataFrame):
         return None, {"note": "Insufficient data variety to train ML model; using rule-based risk only."}
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)
-    model = RandomForestClassifier(n_estimators=200, max_depth=6, random_state=42, class_weight="balanced", n_jobs=-1)
+    # n_jobs=1, not -1: joblib's multiprocess backend forks extra worker
+    # processes that each duplicate the training data in memory. That's
+    # invisible on a dev machine with several GB of RAM, but on a
+    # resource-capped host (e.g. Render's free tier, ~512MB) it can push
+    # memory over the limit and get the whole process OOM-killed --
+    # exactly the kind of upload that "works locally, fails in production."
+    model = RandomForestClassifier(n_estimators=150, max_depth=6, random_state=42, class_weight="balanced", n_jobs=1)
     model.fit(X_train, y_train)
 
     preds = model.predict(X_test)

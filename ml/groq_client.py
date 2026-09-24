@@ -10,10 +10,18 @@ because Groq is unavailable.
 
 import os
 import json
+import logging
 import requests
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+# llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16 -- every
+# request against it now fails with a 4xx, which is why the copilot/report
+# silently fell back to the rule-based path even with a valid API key.
+# openai/gpt-oss-120b is Groq's recommended replacement (see
+# https://console.groq.com/docs/deprecations). Still overridable via env.
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
+logger = logging.getLogger("nexora.groq")
 
 
 class GroqUnavailable(Exception):
@@ -39,8 +47,22 @@ def ask_groq(system_prompt: str, user_prompt: str, max_tokens: int = 700, temper
         "max_tokens": max_tokens,
         "temperature": temperature,
     }
-    resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=30)
-    resp.raise_for_status()
+    try:
+        # (connect_timeout, read_timeout). Trimmed further than before --
+        # if the host is reachable at all, gpt-oss-120b on Groq typically
+        # responds in 1-3s for a short answer; capping the read timeout at
+        # 10s means a slow/stuck request still fails fast into the
+        # rule-based fallback instead of the chat feeling stuck.
+        resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=(3, 10))
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        # Log the real reason server-side (terminal) so it's diagnosable --
+        # e.g. connection blocked, 401 invalid key, 400 bad model, 429 rate
+        # limit -- rather than only ever surfacing a generic "unavailable"
+        # to the browser.
+        body = getattr(getattr(e, "response", None), "text", "")
+        logger.warning("Groq request failed (model=%s): %s%s", GROQ_MODEL, e, f" | response: {body[:300]}" if body else "")
+        raise
     data = resp.json()
     return data["choices"][0]["message"]["content"].strip()
 

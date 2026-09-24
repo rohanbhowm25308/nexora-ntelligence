@@ -101,6 +101,19 @@ def profile_and_clean(df: pd.DataFrame):
             "columns in your file and try again."
         )
 
+    # --- Normalize ID columns to plain strings ---
+    # Uploaded files with purely numeric customer/product/order IDs (e.g.
+    # 1, 2, 3 ...) get read by pandas as int64/float64. Every lookup that
+    # follows -- Customer 360 search, RFM, churn scoring, CLV -- either
+    # compares against a string typed into a search box or a string
+    # column derived elsewhere, so a numeric dtype here made those lookups
+    # silently fail with "No customer found" even for a valid ID. Casting
+    # once here keeps every downstream table consistent. A float dtype
+    # (e.g. from NaNs elsewhere in the column) stringifies as "200.0", so
+    # strip a trailing ".0" to match what the user actually sees/types.
+    for id_col in ("customer_id", "product_id", "order_id"):
+        df[id_col] = df[id_col].astype(str).str.strip().str.replace(r"\.0$", "", regex=True)
+
     # --- Fill remaining gaps sensibly ---
     df["discount_pct"] = df["discount_pct"].fillna(0).clip(0, 0.9)
     df["cost"] = df["cost"].fillna(df["revenue"] * 0.7)

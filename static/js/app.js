@@ -51,6 +51,7 @@ const Nexora = (() => {
   // speech synthesis — no external API, works offline.
   const TTS_SUPPORTED = typeof window !== "undefined" && "speechSynthesis" in window;
   let lastCopilotAnswer = "";
+  let copilotFallbackWarned = false;
 
   function speak(text, btnEl) {
     if (!TTS_SUPPORTED || !text) return;
@@ -202,7 +203,19 @@ const Nexora = (() => {
   // ---------------------------------------------------------------- Overview
   async function loadOverview() {
     refreshDataStatus();
-    const kpis = await fetch("/api/kpis").then((r) => r.json());
+    // These four calls are independent of each other -- fetching them one
+    // at a time (await, then await, then await...) adds up to four full
+    // network round-trips in a row before anything on screen updates,
+    // which is why the dashboard felt slow to "reload" after an upload
+    // even for a small file (the delay is fixed per-request latency, not
+    // dataset size). Running them together cuts that to the time of the
+    // single slowest call instead of the sum of all four.
+    const [kpis, topProducts, topCustomers, catPerf] = await Promise.all([
+      fetch("/api/kpis").then((r) => r.json()),
+      fetch("/api/sql/top_products").then((r) => r.json()),
+      fetch("/api/sql/top_customers").then((r) => r.json()),
+      fetch("/api/sql/category_performance").then((r) => r.json()),
+    ]);
     const cards = [
       ["Total Revenue", fmtINR(kpis.total_revenue), kpis.growth_pct],
       ["Total Profit", fmtINR(kpis.total_profit), null],
@@ -225,18 +238,15 @@ const Nexora = (() => {
       { label: "Revenue", data: kpis.monthly_trend.map((m) => m.revenue) },
     ]);
 
-    const topProducts = await fetch("/api/sql/top_products").then((r) => r.json());
     barChart(document.getElementById("chart-top-products"),
       topProducts.map((p) => p.product_name),
       [{ label: "Revenue", data: topProducts.map((p) => p.revenue) }],
       { indexAxis: "y", plugins: { legend: { display: false } } });
 
-    const topCustomers = await fetch("/api/sql/top_customers").then((r) => r.json());
     document.getElementById("table-top-customers").innerHTML = topCustomers.map((c) => `
       <tr><td>${c.customer_name}</td><td>${c.total_orders}</td><td>${fmtINR(c.total_spent)}</td><td>${c.last_purchase}</td></tr>
     `).join("");
 
-    const catPerf = await fetch("/api/sql/category_performance").then((r) => r.json());
     doughnutChart(document.getElementById("chart-category"), catPerf.map((c) => c.category), catPerf.map((c) => c.revenue));
   }
 
@@ -378,7 +388,12 @@ const Nexora = (() => {
     if (!id) return;
     box.innerHTML = `<div class="card">Loading…</div>`;
     const res = await fetch("/api/customer/" + encodeURIComponent(id));
-    if (!res.ok) { box.innerHTML = `<div class="card">No customer found with ID "${id}". Try an ID from the Segmentation or Churn tables.</div>`; return; }
+    if (!res.ok) {
+      let msg = `No customer found with ID "${id}".`;
+      try { const err = await res.json(); if (err.error) msg = err.error; } catch (e) {}
+      box.innerHTML = `<div class="card">${msg}</div>`;
+      return;
+    }
     const c = await res.json();
     box.innerHTML = `
       <div class="card section-block">
@@ -529,7 +544,7 @@ const Nexora = (() => {
       fetch("/api/ai-insights").then((r) => r.json()),
       fetch("/api/opportunities").then((r) => r.json()),
     ]);
-    document.getElementById("ai-insight-text").innerText = ai.insights + (ai.source === "rule-based-fallback" ? "\n\n(Groq API key not configured — showing a rule-based summary. Add GROQ_API_KEY to .env for full narrative insights.)" : "");
+    document.getElementById("ai-insight-text").innerText = ai.insights + (ai.source === "rule-based-fallback" ? `\n\n(Groq AI unavailable — ${ai.groq_configured ? "request failed: " + ai.note : "no API key configured on the server"}. Showing a rule-based summary instead.)` : "");
     document.getElementById("table-opportunities").innerHTML = opp.map((o) => `
       <tr><td>${o.opportunity}</td><td>${o.potential_impact}</td><td>${o.reason}</td><td>${o.recommended_action}</td></tr>
     `).join("");
@@ -587,9 +602,13 @@ const Nexora = (() => {
     const res = await fetch("/api/copilot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) }).then((r) => r.json());
     lastCopilotAnswer = res.answer;
     const msgId = "msg-" + Date.now();
+    const fallbackWarning = res.source === "rule-based-fallback" && !copilotFallbackWarned
+      ? (copilotFallbackWarned = true,
+         `<div style="font-size:0.72rem; color:var(--warn,#ffc266); margin-top:6px;">⚠️ Groq AI is unavailable right now (${res.groq_configured ? "request failed" : "no API key configured on the server"}) — showing a basic data summary instead of a full AI answer. Check the server terminal for the exact error.</div>`)
+      : "";
     document.getElementById(loadingId).outerHTML = `
       <div class="alert-item" style="background:rgba(255,255,255,0.03); align-items:flex-start; gap:10px;">
-        <span style="flex:1;" id="${msgId}">🤖 ${res.answer}</span>
+        <span style="flex:1;" id="${msgId}">🤖 ${res.answer}${fallbackWarning}</span>
         <button class="icon-btn" title="Read this answer aloud" onclick="Nexora.speak(document.getElementById('${msgId}').textContent, this)" style="flex-shrink:0; padding:5px 9px; font-size:0.75rem;">🔊</button>
       </div>`;
     chat.scrollTop = chat.scrollHeight;
@@ -755,8 +774,10 @@ const Nexora = (() => {
       renderQuality(data.quality_report);
       loadDetective();
       loaded.clear();
-      loadView("upload"); // stays
+      loaded.add("upload"); // already rendered above -- don't make loadUpload() re-fetch the same data-quality/detective calls a second time
       loadOverview();
+      loadReport(); // refresh the report iframe now too, in case it's already open
+      loaded.add("report");
       refreshDataStatus();
     } catch (err) {
       clearTimeout(timeoutId);
@@ -791,6 +812,16 @@ const Nexora = (() => {
         <div style="font-size:0.82rem; color:var(--cyan-bright); margin-top:4px;"><b>Fix:</b> ${i.fix}</div>
       </div>`).join("");
   }
+  function loadReport() {
+    // The report lives in an iframe (it's server-rendered HTML, not JSON),
+    // so it isn't covered by a fetch() call the way other views are. Point
+    // it at /api/report fresh every time this view loads (cache-busted)
+    // instead of relying on a static src, otherwise it keeps showing
+    // whatever dataset was active the very first time the iframe was
+    // parsed (usually the demo data), even after a new CSV is uploaded.
+    const frame = document.getElementById("report-iframe");
+    if (frame) frame.src = "/api/report?t=" + Date.now();
+  }
   async function loadUpload() {
     const q = await fetch("/api/data-quality").then((r) => r.json());
     renderQuality(q);
@@ -815,7 +846,7 @@ const Nexora = (() => {
       renderQuality(data.quality_report);
       loadDetective();
       loaded.clear();
-      loadView("upload");
+      loaded.add("upload"); // already rendered above -- avoid a redundant re-fetch
       loadOverview();
       refreshDataStatus();
     } catch (err) {
@@ -849,7 +880,7 @@ const Nexora = (() => {
     products: loadProducts, discounts: loadDiscounts, basket: loadBasket,
     regions: loadRegions, seasonality: loadSeasonality, insights: loadInsights,
     recommendations: loadRecommendations, anomalies: loadAnomalies, goals: loadGoals,
-    upload: loadUpload, revenuescan: loadRevenueScan, commandcenter: loadCommandCenter,
+    upload: loadUpload, revenuescan: loadRevenueScan, commandcenter: loadCommandCenter, report: loadReport,
     copilot: loadCopilot, simulator: loadSimulator, rootcause: loadRootCause, nba: loadNBA,
   };
 

@@ -28,7 +28,14 @@ def build_context_bundle(kpis, regions, matrix, churn_summary, root_cause, oppor
 
 
 def _rule_based_answer(question: str, ctx: dict) -> str:
-    q = question.lower()
+    q = question.lower().strip()
+
+    greetings = {"hi", "hello", "hey", "hii", "hiii", "yo", "sup", "good morning",
+                 "good afternoon", "good evening", "namaste"}
+    if q.rstrip("!.? ") in greetings:
+        return ("Hi! Ask me about your business — for example: \"Why did profit "
+                "decrease this month?\", \"Which customers are at risk?\", or "
+                "\"What's my top revenue opportunity?\"")
 
     if "profit" in q and ("decrease" in q or "drop" in q or "fell" in q or "down" in q or "why" in q):
         rc = ctx["root_cause_last_month"]
@@ -76,15 +83,37 @@ def answer_question(question: str, ctx: dict) -> dict:
         "manager's question using ONLY the JSON data context provided — never use "
         "outside knowledge, never invent numbers not present in the context. If the "
         "context doesn't contain enough information to answer, say so plainly. Cite "
-        "concrete figures from the context. Keep answers to 2-4 sentences, plain "
-        "business language, no markdown headers."
+        "concrete figures from the context. Keep answers to 2-3 short sentences, "
+        "plain business language, no markdown headers."
     )
-    user_prompt = f"DATA CONTEXT:\n{json.dumps(ctx, default=str)[:9000]}\n\nQUESTION: {question}"
+    # Smaller prompt = fewer input tokens for Groq to process = faster
+    # response, on top of the read-timeout cut in groq_client.py. 9000 chars
+    # of JSON context was mostly unread padding for a 2-3 sentence answer.
+    user_prompt = f"DATA CONTEXT:\n{json.dumps(ctx, default=str)[:4000]}\n\nQUESTION: {question}"
     try:
-        text = groq_client.ask_groq(system_prompt, user_prompt, max_tokens=350, temperature=0.2)
+        text = groq_client.ask_groq(system_prompt, user_prompt, max_tokens=180, temperature=0.2)
         return {"source": "groq-llm", "answer": text}
+    except groq_client.GroqUnavailable as e:
+        # No API key configured at all -- very common after a fresh deploy
+        # (the .env file that holds it locally is gitignored, so it never
+        # reaches the server; it has to be set again as an actual
+        # environment variable on the host). Say so plainly instead of
+        # quietly handing back a KPI dump that looks like a real answer.
+        return {
+            "source": "rule-based-fallback",
+            "answer": _rule_based_answer(question, ctx),
+            "note": str(e),
+            "groq_configured": False,
+        }
     except Exception as e:
-        return {"source": "rule-based-fallback", "answer": _rule_based_answer(question, ctx), "note": str(e)}
+        # Key is set but the call itself failed (bad key, rate limit,
+        # network issue reaching Groq, etc.)
+        return {
+            "source": "rule-based-fallback",
+            "answer": _rule_based_answer(question, ctx),
+            "note": f"Groq request failed: {e}",
+            "groq_configured": True,
+        }
 
 
 SUGGESTED_QUESTIONS = [
